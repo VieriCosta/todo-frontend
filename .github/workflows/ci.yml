@@ -26,14 +26,14 @@ jobs:
       - name: 📦 Install dependencies
         run: npm install
 
-      # 4. Rodar lint (se configurado)
+      # 4. Rodar lint (se existir)
       - name: 🔍 Run ESLint
         run: npm run lint --if-present
 
-      # 5. Rodar build (Vite)
+      # 5. Build (Vite)
       - name: 🏗️ Build project
         run: npm run build
 
-      # 6. Rodar testes (caso configure Jest/RTL)
+      # 6. Rodar testes (se existir)
       - name: 🧪 Run tests
         run: npm run test --if-present
