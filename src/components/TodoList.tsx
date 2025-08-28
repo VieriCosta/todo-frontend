@@ -1,50 +1,37 @@
-import React, { useEffect } from "react";
-import api from "../services/api";
+import React from "react";
 import type { Todo } from "../types/Todo";
-import TodoItem from "./TodoItem";
+import TodoCard from "./TodoCard";
 
-interface TodoListProps {
+interface Props {
   todos: Todo[];
-  setTodos: React.Dispatch<React.SetStateAction<Todo[]>>;
+  onUpdate: (id: string, updates: Partial<Todo>) => void;
+  onDelete: (id: string) => void;
 }
 
-const TodoList: React.FC<TodoListProps> = ({ todos, setTodos }) => {
-  useEffect(() => {
-    const fetchTodos = async () => {
-      try {
-        const res = await api.get<Todo[]>("/todos");
-        setTodos(res.data);
-      } catch (error) {
-        console.error("Erro ao buscar tarefas:", error);
-      }
-    };
-
-    fetchTodos();
-  }, [setTodos]);
-
-  const handleUpdate = (updated: Todo) => {
-    setTodos((prev) => prev.map((t) => (t._id === updated._id ? updated : t)));
-  };
-
-  const handleDelete = (id: string) => {
-    setTodos((prev) => prev.filter((t) => t._id !== id));
-  };
+const TodoList: React.FC<Props> = ({ todos, onUpdate, onDelete }) => {
+  const favorites = todos.filter(t => t.isFavorite);
+  const others = todos.filter(t => !t.isFavorite);
 
   return (
-    <div className="todo-list">
-      {todos.length === 0 ? (
-        <p>Nenhuma tarefa cadastrada.</p>
-      ) : (
-        todos.map((todo) => (
-          <TodoItem
-            key={todo._id}
-            todo={todo}
-            onUpdate={handleUpdate}
-            onDelete={handleDelete}
-          />
-        ))
-      )}
-    </div>
+    <>
+      <section className="block">
+        <h2>Favorites</h2>
+        <div className="todos-grid">
+          {favorites.map(t => (
+            <TodoCard key={t._id} todo={t} onUpdate={onUpdate} onDelete={onDelete} />
+          ))}
+        </div>
+      </section>
+
+      <section className="block">
+        <h2>Others</h2>
+        <div className="todos-grid">
+          {others.map(t => (
+            <TodoCard key={t._id} todo={t} onUpdate={onUpdate} onDelete={onDelete} />
+          ))}
+        </div>
+      </section>
+    </>
   );
 };
 

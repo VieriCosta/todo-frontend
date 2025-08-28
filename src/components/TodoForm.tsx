@@ -1,68 +1,93 @@
-import React, { useState } from "react";
-import api from "../services/api";
-import type { Todo } from "../types/Todo";
+import React, { useRef, useState } from "react";
 
-interface TodoFormProps {
-  onAdd: (todo: Todo) => void;
+type AddPayload = {
+  title: string;
+  description?: string;
+  color?: string;
+};
+
+interface Props {
+  onAdd: (data: AddPayload) => void | Promise<void>;
 }
 
-const TodoForm: React.FC<TodoFormProps> = ({ onAdd }) => {
+const DEFAULT_COLOR = "#f3f4f6";
+
+const TodoForm: React.FC<Props> = ({ onAdd }) => {
+  const [isOpen, setIsOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [color, setColor] = useState("#ffffff");
+  const [color, setColor] = useState(DEFAULT_COLOR);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const colorRef = useRef<HTMLInputElement | null>(null);
 
-    if (!title.trim()) {
-      alert("O título é obrigatório!");
-      return;
-    }
+  const reset = () => {
+    setTitle("");
+    setDescription("");
+    setColor(DEFAULT_COLOR);
+    setIsOpen(false);
+  };
 
-    try {
-      const res = await api.post<Todo>("/todos", {
-        title,
-        description,
-        color,
-      });
-
-      onAdd(res.data);
-      setTitle("");
-      setDescription("");
-      setColor("#ffffff");
-    } catch (error) {
-      console.error("Erro ao criar tarefa:", error);
-      alert("Erro ao criar tarefa.");
-    }
+  const handleSave = async () => {
+    const payload: AddPayload = {
+      title: title.trim(),
+      description: description.trim() ? description.trim() : undefined,
+      color,
+    };
+    if (!payload.title) return reset();
+    await Promise.resolve(onAdd(payload));
+    reset();
   };
 
   return (
-    <form onSubmit={handleSubmit} className="todo-form">
+    <div className={`new-todo ${isOpen ? "open" : ""}`}>
       <input
-        type="text"
-        placeholder="Título da tarefa"
+        className="new-title"
+        placeholder="Add a new todo..."
         value={title}
+        onFocus={() => setIsOpen(true)}
         onChange={(e) => setTitle(e.target.value)}
-        required
       />
 
-      <textarea
-        placeholder="Descrição (opcional)"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-      />
+      {isOpen && (
+        <>
+          <textarea
+            className="new-desc"
+            placeholder="Description (optional)..."
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
 
-      <label>
-        Cor:
-        <input
-          type="color"
-          value={color}
-          onChange={(e) => setColor(e.target.value)}
-        />
-      </label>
+          <div className="new-opts">
+            <button
+              type="button"
+              className="color-emoji"
+              title="Pick a color"
+              onClick={() => colorRef.current?.click()}
+            >
+              🎨
+            </button>
 
-      <button type="submit">Adicionar</button>
-    </form>
+            <input
+              ref={colorRef}
+              type="color"
+              className="color-hidden"
+              value={color}
+              onChange={(e) => setColor(e.target.value)}
+              aria-label="color picker"
+            />
+
+            <div className="form-actions">
+              <button type="button" className="btn ghost" onClick={reset}>
+                Cancel
+              </button>
+              <button type="button" className="btn primary" onClick={handleSave}>
+                Save
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
   );
 };
 
